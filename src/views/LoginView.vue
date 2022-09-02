@@ -25,6 +25,7 @@
             show-password
             placeholder="请输入密码"
             v-model="login_formInfo.password"
+            @keyup.enter.native="loginIn"
           ></el-input>
         </el-form-item>
         <el-form-item class="btn">
@@ -89,7 +90,7 @@ export default {
             );
             if (data.meta.status == "200") {
               this.$message.success(data.meta.msg);
-              window.localStorage.setItem("token", data.data.token); //session临时会话 保存token
+              window.sessionStorage.setItem("token", data.data.token); //session临时会话 保存token
               this.$router.push("/home");
             } else {
               this.$message.error(data.meta.msg);

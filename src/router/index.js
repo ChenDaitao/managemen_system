@@ -1,15 +1,8 @@
-/*
- * @Author: chenxiaolin 690208900@qq.com
- * @Date: 2022-08-27 21:22:11
- * @LastEditors: chenxiaolin 690208900@qq.com
- * @LastEditTime: 2022-09-01 22:47:02
- * @FilePath: \ppmanage\src\router\index.js
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
 import Vue from "vue";
 import VueRouter from "vue-router";
 
 Vue.use(VueRouter);
+import welcome from "../components/WelcomeCmp";
 
 const routes = [
   // {
@@ -38,6 +31,8 @@ const routes = [
   },
   {
     path: "/home",
+    redirect: "/welcome",
+    children: [{ path: "/welcome", component: welcome }],
     component: () => import(/*ebpackChunkName:"home"  */ "../views/HomeView"),
   },
 ];
