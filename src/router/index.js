@@ -3,6 +3,7 @@ import VueRouter from "vue-router";
 
 Vue.use(VueRouter);
 import welcome from "../components/WelcomeCmp";
+import users from "../components/UserCmp";
 
 const routes = [
   // {
@@ -32,7 +33,13 @@ const routes = [
   {
     path: "/home",
     redirect: "/welcome",
-    children: [{ path: "/welcome", component: welcome }],
+    children: [
+      { path: "/welcome", component: welcome },
+      {
+        path: "/users",
+        component: users,
+      },
+    ],
     component: () => import(/*ebpackChunkName:"home"  */ "../views/HomeView"),
   },
 ];

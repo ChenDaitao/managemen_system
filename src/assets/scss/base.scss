@@ -1,4 +1,6 @@
-body,html,#app{
+body,
+html,
+#app {
   height: 100%;
   min-width: 1366px;
   margin: 0;
@@ -6,13 +8,16 @@ body,html,#app{
   box-sizing: border-box;
 }
 
-li{
+li {
   list-style: none;
 }
-a{
+a {
   text-decoration: none;
 }
 
-input{
+input {
   outline: none;
+}
+.el-card {
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15) !important;
 }
