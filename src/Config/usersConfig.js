@@ -18,14 +18,10 @@ export const role_name = {
   label: "角色",
   align: "center",
 };
-export const state = {
-  label: "状态",
-  align: "center",
-};
+
 export const tableColumn = {
   username,
   email,
   mobile,
   role_name,
-  state,
 };

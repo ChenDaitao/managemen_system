@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/valid-v-for -->
 <template>
   <div>
     <!-- 面包屑导航区域 -->
@@ -10,17 +11,20 @@
     <el-card>
       <el-row :gutter="20">
         <el-col :span="8"
-          ><el-input
+          ><el-input v-model="queryInfo.query" @clear="getUserList" clearable
             ><el-button
               slot="append"
               icon="el-icon-search"
+              @click="getUserList"
             ></el-button></el-input
         ></el-col>
         <el-col :span="4"
-          ><el-button type="primary">添加用户</el-button></el-col
+          ><el-button type="primary" @click="addDialog = true"
+            >添加用户</el-button
+          ></el-col
         >
       </el-row>
-      <el-table>
+      <el-table :data="tableData">
         <template v-for="item in tableColumn">
           <el-table-column
             :key="item.prop"
@@ -29,18 +33,87 @@
             :align="item.align"
           ></el-table-column>
         </template>
+        <el-table-column label="状态" align="center">
+          <template slot-scope="scope">
+            <el-switch
+              v-model="scope.row.mg_state"
+              @change="statusChange(scope.row)"
+            >
+            </el-switch>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" align="center">
+          <template slot-scope="scope">
+            {{ scope.row.id }}
+            <!-- 修改按钮 -->
+            <el-button
+              type="primary"
+              icon="el-icon-edit"
+              size="mini"
+              circle
+            ></el-button>
+            <!-- 删除按钮 -->
+            <el-button
+              type="danger"
+              icon="el-icon-delete"
+              size="mini"
+              circle
+            ></el-button>
+            <!-- 分配角色按钮 添加消息提示 -->
+            <el-tooltip
+              effect="dark"
+              content="分配角色"
+              placement="top"
+              :enterable="false"
+            >
+              <el-button
+                type="warning"
+                icon="el-icon-setting"
+                size="mini"
+                circle
+              ></el-button>
+            </el-tooltip>
+          </template>
+        </el-table-column>
       </el-table>
       <el-pagination
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
-        :current-page="currentPage4"
-        :page-sizes="[100, 200, 300, 400]"
-        :page-size="100"
+        :current-page="queryInfo.query.pagenum"
+        :page-sizes="[10, 20, 30, 50]"
+        :page-size="queryInfo.query.pagesize"
         layout="total, sizes, prev, pager, next, jumper"
-        :total="400"
+        :total="total"
       >
       </el-pagination>
     </el-card>
+    <!-- dialog -->
+    <el-dialog title="添加用户" :visible.sync="addDialog" width="30%">
+      <el-form
+        :model="addForm"
+        :rules="addFormRules"
+        ref="addFormRef"
+        label-width="70px"
+      >
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="addForm.username"></el-input>
+        </el-form-item>
+        <el-form-item label="密码" prop="password" show-password>
+          <el-input v-model="addForm.password"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="addForm.email"></el-input>
+        </el-form-item>
+        <el-form-item label="手机号 " prop="mobile">
+          <el-input v-model="addForm.mobile"></el-input>
+        </el-form-item>
+      </el-form>
+
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="cancelAdd">取 消</el-button>
+        <el-button type="primary" @click="confirmAdd">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -48,27 +121,132 @@
 import { tableColumn } from "../Config/usersConfig";
 export default {
   data() {
+    // var checkMoblie = (rule, value, callback) => {
+    //   // 验证手机号的正则表达式
+    //   const regMoblie =
+    //     /^(13[0-9]|14[5|7]|15[0|1|2|3|4|5|6|7|8|9]|18[0|1|2|3|5|6|7|8|9])\d{8}$/;
+    //   if (regMoblie.test(value)) {
+    //     return callback();
+    //   }
+    //   callback(new Error("请输入合法的手机号"));
+    // };
     return {
       tableColumn: tableColumn, //table表头数据
       tableData: [],
       queryInfo: {
         query: "",
-        // 当前页数
-        pagenum: 1,
-        // 当前每页显示多少条数据
-        pagesize: 2,
+        pagenum: 1, // 当前页数
+        pagesize: 10, // 每页显示总数
       },
+      total: 0, //分页显示总数
+      addDialog: false,
+      /* addDialog */
+      addForm: {
+        username: "",
+        password: "",
+        email: "",
+        mobile: "",
+      }, //添加用户表单
+
+      addFormRules: {
+        username: [
+          { required: true, message: "请输入用户名", trigger: "blur" },
+          {
+            min: 3,
+            max: 5,
+            message: "用户名的长度在3-5个字符之间",
+            trigger: "blur",
+          },
+        ],
+        password: [
+          { required: true, message: "请输入密码", trigger: "blur" },
+          {
+            min: 6,
+            max: 15,
+            message: "密码的长度在6-15个字符之间",
+            trigger: "blur",
+          },
+        ],
+        email: [
+          { required: true, message: "请输入邮箱", trigger: "blur" },
+          // { validator: checkEmail, trigger: 'blur' },
+          {
+            type: "email",
+            message: "请输入正确的邮箱地址",
+            trigger: ["blur", "change"],
+          },
+        ],
+        mobile: [
+          { required: true, message: "请输入手机号", trigger: "blur" },
+          {
+            min: 11,
+            max: 11,
+            message: "请输入11位手机号",
+            trigger: ["blur", "change"],
+          },
+        ],
+      }, //校验规则
     };
   },
   created() {
-    this.getTableData();
+    this.getUserList();
   },
   methods: {
-    async getTableData() {
-      const { data } = await this.$http.post("users", {
+    /* 处理分页 */
+    handleSizeChange(newsize) {
+      this.queryInfo.pagesize = newsize;
+      this.getUserList();
+    },
+    handleCurrentChange(newpage) {
+      this.queryInfo.pagenum = newpage;
+      this.getUserList();
+    },
+    /* 获取table数据 */
+    async getUserList() {
+      const { data: data } = await this.$http.get("users", {
         params: this.queryInfo,
       });
-      console.log(data);
+      console.log(data, "获取用户数据");
+      if (data.meta.status == 200) {
+        this.total = data.data.total;
+        this.tableData = data.data.users;
+        console.log(data.meta.msg);
+      } else {
+        this.$message.error(data.meta.msg);
+      }
+    },
+    /* 添加用户处理 */
+    cancelAdd() {
+      this.addDialog = false;
+      this.$refs.addFormRef.resetFields();
+    },
+    confirmAdd() {
+      this.$refs.addFormRef
+        .validate()
+        .then(async () => {
+          const { data } = await this.$http.post("users", this.addForm);
+          if (data.meta.status == 201) {
+            this.$message.success(data.meta.msg);
+            this.getUserList();
+            this.addDialog = false;
+            console.log(data, "添加用户");
+          } else {
+            this.$message.error(data.meta.msg);
+          }
+        })
+        .catch((err) => err);
+    },
+    /* 切换用户状态 */
+    async statusChange(row) {
+      const { data } = await this.$http.put(
+        `users/${row.id}/state/${row.mg_state}`
+      );
+      if (data.meta.status == 200) {
+        this.$message.success(data.meta.msg);
+        console.log(data, "修改用户状态");
+      } else {
+        this.$message.error(data.meta.msg);
+      }
     },
   },
 };

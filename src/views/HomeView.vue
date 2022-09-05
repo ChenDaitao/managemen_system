@@ -14,13 +14,11 @@
           :collapse="isCollapse"
           :collapse-transition="false"
           default-active="activePath"
-          @open="handleOpen"
-          @close="handleClose"
           background-color="#333744"
           text-color="#fff"
           active-text-color="#ffd04b"
-          unique-opened="true"
-          router="true"
+          unique-opened
+          router
         >
           <!--  unique-opened 菜单每次只打开一个 -->
           <el-submenu
