@@ -43,11 +43,15 @@ const routes = [
     component: () => import(/*ebpackChunkName:"home"  */ "../views/HomeView"),
   },
 ];
-
 const router = new VueRouter({
   mode: "history",
   base: process.env.BASE_URL,
   routes,
 });
-
+//前置路由守卫
+router.beforeEach((to, from, next) => {
+  if (to.path === "/login") return next();
+  if (!window.sessionStorage.getItem("token")) return next("/login");
+  next();
+});
 export default router;

@@ -13,7 +13,7 @@
         <el-menu
           :collapse="isCollapse"
           :collapse-transition="false"
-          default-active="activePath"
+          :default-active="activePath"
           background-color="#333744"
           text-color="#fff"
           active-text-color="#ffd04b"
@@ -32,10 +32,10 @@
             </template>
             <!-- 子级菜单链接改造为 子级路由链接：点击二级菜单的时候，就会根据菜单的index属性进行路由跳转 -->
             <el-menu-item
-              :index="`/${subitem.path}`"
               v-for="subitem in item.children"
+              :index="`/${subitem.path}`"
               :key="subitem.id"
-              @click="saveNavState('/' + subItem.path)"
+              @click="saveNavState(subitem)"
             >
               <i class="el-icon-menu"></i>
               <span>{{ subitem.authName }}</span>
@@ -49,6 +49,8 @@
 </template>
 
 <script>
+import User from "@/api/server";
+
 export default {
   data() {
     return {
@@ -65,7 +67,7 @@ export default {
     };
   },
   created() {
-    this.getMenuList();
+    this.getMenuListData();
     this.activePath = window.sessionStorage.getItem("activePath");
   },
   methods: {
@@ -78,18 +80,20 @@ export default {
       this.isCollapse = !this.isCollapse;
     },
     /* 获取左侧菜单栏数据 */
-    async getMenuList() {
-      const { data } = await this.$http.get("menus");
-      console.log(data);
-      if (data.meta.status == 200) {
-        this.menuList = data.data;
-        console.log(data.meta.msg);
+    async getMenuListData() {
+      const {
+        data: { data, meta },
+      } = await User.getMenuList();
+      if (meta.status == 200) {
+        this.menuList = data;
       } else {
-        console.log(data.meta.msg);
+        console.log(meta.msg);
       }
     },
     /* 保存链接激活高亮显示状态 */
-    saveNavState(activePath) {
+    saveNavState(item) {
+      // console.log(activePath.path, "activePath");
+      const activePath = `/${item.path}`;
       window.sessionStorage.setItem("activePath", activePath);
       this.activePath = activePath;
     },

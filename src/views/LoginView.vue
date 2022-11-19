@@ -38,6 +38,7 @@
 </template>
 
 <script>
+import User from "@/api/server";
 export default {
   data() {
     return {
@@ -84,19 +85,16 @@ export default {
         this.$refs.login_formRef
           .validate()
           .then(async () => {
-            const { data } = await this.$http.post(
-              "login",
-              this.login_formInfo
-            );
-            if (data.meta.status == "200") {
-              this.$message.success(data.meta.msg);
-              window.sessionStorage.setItem("token", data.data.token); //session临时会话 保存token
+            const {
+              data: { meta, data },
+            } = await User.getLogin(this.login_formInfo);
+            if (meta.status == "200") {
+              this.$message.success(meta.msg);
+              window.sessionStorage.setItem("token", data.token); //session临时会话 保存token
               this.$router.push("/home");
             } else {
-              this.$message.error(data.meta.msg);
+              this.$message.error(meta.msg);
             }
-
-            console.log(data);
           })
           .catch((err) => {
             return err;

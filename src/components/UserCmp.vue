@@ -1,4 +1,10 @@
+<!--
+ * @Date: 2022-09-07 22:40:22
+ * @LastEditTime: 2022-11-19 21:02:24
+ * @Description: 
+-->
 <!-- eslint-disable vue/valid-v-for -->
+
 <template>
   <div>
     <!-- 面包屑导航区域 -->
@@ -51,6 +57,7 @@
               icon="el-icon-edit"
               size="mini"
               circle
+              @click="editOperation(scope.row)"
             ></el-button>
             <!-- 删除按钮 -->
             <el-button
@@ -119,6 +126,7 @@
 
 <script>
 import { tableColumn } from "../Config/usersConfig";
+import User from "@/api/server";
 export default {
   data() {
     // var checkMoblie = (rule, value, callback) => {
@@ -203,16 +211,17 @@ export default {
     },
     /* 获取table数据 */
     async getUserList() {
-      const { data: data } = await this.$http.get("users", {
-        params: this.queryInfo,
-      });
-      console.log(data, "获取用户数据");
-      if (data.meta.status == 200) {
-        this.total = data.data.total;
-        this.tableData = data.data.users;
-        console.log(data.meta.msg);
+      const {
+        data: {
+          meta: { status, msg },
+          data: { total, users },
+        },
+      } = await User.getUserList(this.queryInfo);
+      if (status == 200) {
+        this.total = total;
+        this.tableData = users;
       } else {
-        this.$message.error(data.meta.msg);
+        this.$message.error(msg);
       }
     },
     /* 添加用户处理 */
@@ -224,29 +233,33 @@ export default {
       this.$refs.addFormRef
         .validate()
         .then(async () => {
-          const { data } = await this.$http.post("users", this.addForm);
-          if (data.meta.status == 201) {
-            this.$message.success(data.meta.msg);
+          const {
+            data: { meta },
+          } = await User.getUserAdd(this.addForm);
+          if (meta.status == 201) {
+            this.$message.success(meta.msg);
             this.getUserList();
             this.addDialog = false;
-            console.log(data, "添加用户");
           } else {
-            this.$message.error(data.meta.msg);
+            this.$message.error(meta.msg);
           }
         })
         .catch((err) => err);
     },
     /* 切换用户状态 */
     async statusChange(row) {
-      const { data } = await this.$http.put(
-        `users/${row.id}/state/${row.mg_state}`
-      );
-      if (data.meta.status == 200) {
-        this.$message.success(data.meta.msg);
-        console.log(data, "修改用户状态");
+      const {
+        data: { meta },
+      } = await User.getUserStatusChange(row);
+      if (meta.status == 200) {
+        this.$message.success(meta.msg);
       } else {
-        this.$message.error(data.meta.msg);
+        this.$message.error(meta.msg);
       }
+    },
+    /* 操作---编辑 */
+    editOperation(row) {
+      this.$alert(row);
     },
   },
 };
@@ -257,7 +270,7 @@ export default {
   margin-top: 15px;
   .el-pagination {
     margin-top: 15px;
-    margin-left: 1080px;
+    margin-left: 62%;
   }
 }
 </style>

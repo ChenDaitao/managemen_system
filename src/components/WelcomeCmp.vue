@@ -3,7 +3,12 @@
 </template>
 
 <script>
-export default {};
+export default {
+  name: "WelcomeCmp",
+  data() {
+    return {};
+  },
+};
 </script>
 
 <style lang="scss" scoped></style>
