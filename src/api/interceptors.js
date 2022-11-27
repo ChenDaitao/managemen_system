@@ -1,13 +1,13 @@
 /*
  * @Date: 2022-11-13 22:32:36
- * @LastEditTime: 2022-11-15 23:20:09
+ * @LastEditTime: 2022-11-19 21:57:42
  * @Description: 请求拦截
  */
 
 import axios from "axios";
 
 const service = axios.create({
-  timeout: 5000,
+  timeout: 500000,
 });
 // // 通过axios请求拦截器添加token，保证拥有获取数据的权限
 service.interceptors.request.use((config) => {

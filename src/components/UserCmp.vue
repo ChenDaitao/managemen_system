@@ -1,6 +1,6 @@
 <!--
  * @Date: 2022-09-07 22:40:22
- * @LastEditTime: 2022-11-19 21:02:24
+ * @LastEditTime: 2022-11-27 23:11:20
  * @Description: 
 -->
 <!-- eslint-disable vue/valid-v-for -->
@@ -64,6 +64,7 @@
               type="danger"
               icon="el-icon-delete"
               size="mini"
+              @click="removeUserById(scope.row.id)"
               circle
             ></el-button>
             <!-- 分配角色按钮 添加消息提示 -->
@@ -78,6 +79,7 @@
                 icon="el-icon-setting"
                 size="mini"
                 circle
+                @click="assignUserInfoRole(scope.row)"
               ></el-button>
             </el-tooltip>
           </template>
@@ -94,7 +96,7 @@
       >
       </el-pagination>
     </el-card>
-    <!-- dialog -->
+    <!-- AddUser Dialog -->
     <el-dialog title="添加用户" :visible.sync="addDialog" width="30%">
       <el-form
         :model="addForm"
@@ -119,6 +121,56 @@
       <span slot="footer" class="dialog-footer">
         <el-button @click="cancelAdd">取 消</el-button>
         <el-button type="primary" @click="confirmAdd">确 定</el-button>
+      </span>
+    </el-dialog>
+    <!-- Edit Dialog -->
+    <el-dialog
+      title="修改用户"
+      :visible.sync="eidtDialog"
+      width="30%"
+      @close="editDialogClose"
+    >
+      <el-form
+        :model="editForm"
+        :rules="addFormRules"
+        ref="editFormRef"
+        label-width="70px"
+        ><el-form-item label="用户名" prop="username">
+          <el-input v-model="editForm.username"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="editForm.email"></el-input>
+        </el-form-item>
+        <el-form-item label="手机号 " prop="mobile">
+          <el-input v-model="editForm.mobile"></el-input> </el-form-item
+      ></el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="eidtDialog = false">取消</el-button>
+        <el-button type="primary" @click="editUserInfo">确定</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 分配角色 Dialog -->
+    <el-dialog title="分配角色" :visible.sync="setRoleDialogShow" width="50%">
+      <div>
+        <p>当前用户：{{ userInfo.username }}</p>
+        <p>当前角色：{{ userInfo.role_name }}</p>
+        <p>
+          分配新角色：
+          <el-select v-model="selectedRoleId" placeholder="请选择">
+            <el-option
+              v-for="item in roleList"
+              :key="item.id"
+              :label="item.roleName"
+              :value="item.id"
+            >
+            </el-option>
+          </el-select>
+        </p>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="setRoleDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="setRoleConfirm">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -147,8 +199,16 @@ export default {
         pagesize: 10, // 每页显示总数
       },
       total: 0, //分页显示总数
-      addDialog: false,
+      /* editDialog */
+      eidtDialog: false,
+      eidtUserId: "",
+      editForm: {
+        username: "",
+        email: "",
+        mobile: "",
+      },
       /* addDialog */
+      addDialog: false,
       addForm: {
         username: "",
         password: "",
@@ -194,6 +254,10 @@ export default {
           },
         ],
       }, //校验规则
+      setRoleDialogShow: false,
+      userInfo: {},
+      roleList: [], // 所有角色的数据列表
+      selectedRoleId: "", //已选中的角色Id
     };
   },
   created() {
@@ -259,18 +323,88 @@ export default {
     },
     /* 操作---编辑 */
     editOperation(row) {
-      this.$alert(row);
+      this.eidtDialog = true;
+      this.eidtUserId = row.id;
+    },
+    // 修改用户对话框的关闭事件
+    editDialogClose() {
+      this.$refs.editFormRef.resetFields();
+    },
+    // 校验用户修改信息
+    editUserInfo() {
+      this.$refs.editFormRef
+        .validate()
+        .then(async () => {
+          const {
+            data: {
+              meta: { status, msg },
+            },
+          } = await User.getUserInfoEdit(this.eidtUserId, this.editForm);
+          if (status == 200) {
+            this.$message.success(msg);
+            this.getUserList();
+          } else {
+            this.$message.error(msg);
+          }
+          this.eidtDialog = false;
+        })
+        .catch((err) => err);
+    },
+    /* 删除用户 */
+    removeUserById(id) {
+      this.$confirm("此操作可永久删除该用户，是否继续？", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(async () => {
+          const {
+            data: {
+              meta: { status, msg },
+            },
+          } = await User.getUserInfoDelete(id);
+          if (status == 200) {
+            this.$message.success(msg);
+            this.getUserList();
+          } else this.$message.error(msg);
+        })
+        .catch((error) => this.$message.info(error)); //此catch 点击取消就会触发 用来提示用户取消操作
+    },
+    /* 分配用户角色*/
+    assignUserInfoRole(userInfo) {
+      this.userInfo = userInfo;
+      this.getRolesListAll();
+      this.setRoleDialogShow = true;
+    },
+    //获取所有角色列表
+    async getRolesListAll() {
+      const {
+        data: { data, meta },
+      } = await User.getRolesList();
+      if (meta.status !== 200) {
+        return this.$$message.error(meta.msg);
+      }
+      this.roleList = data;
+    },
+    //确认分配角色
+    async setRoleConfirm() {
+      if (!this.selectedRoleId) {
+        return this.$message.warning("请选择一个角色！");
+      }
+      const {
+        data: { meta },
+      } = await User.getUserroleAssign(this.userInfo.id, {
+        rid: this.selectedRoleId,
+      });
+      if (meta.status !== 200) {
+        return this.$message.err(meta.msg);
+      }
+      this.$message.success(meta.msg);
+      this.getUserList();
+      this.setRoleDialogShow = false;
     },
   },
 };
 </script>
 
-<style lang="scss" scoped>
-.el-card {
-  margin-top: 15px;
-  .el-pagination {
-    margin-top: 15px;
-    margin-left: 62%;
-  }
-}
-</style>
+<style lang="scss" scoped></style>

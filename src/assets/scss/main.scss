@@ -1,0 +1,19 @@
+.el-card {
+  margin-top: 15px;
+  .el-table{
+    margin-top: 10px;
+  }
+  .el-pagination {
+    margin-top: 15px;
+    margin-left: 62%;
+  }
+}
+
+// @mixin test {
+//   background: fixed;
+//   color: #222;
+// }
+// .el-card{
+//   font-size: 151px;
+//   @include test
+// }
